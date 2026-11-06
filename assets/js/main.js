@@ -613,14 +613,9 @@ renderRail();
   rail.addEventListener('click',e=>{ if(moved){ e.preventDefault(); return; } const t=e.target.closest('[data-tile]'); if(!t) return; setCategory(t.dataset.tile); go('#catTools'); });
   if(finePointer){
     let activeTile = null, tileRect = null;
-    addEventListener('pointermove',e=>{
-      if(down){
-        const dx=e.clientX-down.x;
-        if(Math.abs(dx)>5){ moved=true; rail.classList.add('dragging'); }
-        if(moved) rail.scrollLeft=down.s-dx;
-        return;
-      }
-      const t = e.target ? e.target.closest('#catRail .tile') : null;
+    rail.addEventListener('pointermove',e=>{
+      if(down) return;
+      const t = e.target ? e.target.closest('.tile') : null;
       if (!t) {
         if (activeTile) { activeTile.style.transform = ''; activeTile = null; tileRect = null; }
         return;
@@ -641,11 +636,17 @@ renderRail();
         t.style.transform = `perspective(800px) rotateY(${(x - .5) * 8}deg) rotateX(${(-y + .5) * 6}deg) translateY(-4px)`;
       }
     }, { passive: true });
+    addEventListener('pointermove',e=>{
+      if(!down) return;
+      const dx=e.clientX-down.x;
+      if(Math.abs(dx)>5){ moved=true; rail.classList.add('dragging'); }
+      if(moved) rail.scrollLeft=down.s-dx;
+    }, { passive: true });
     rail.addEventListener('pointerleave', () => {
       if (activeTile) { activeTile.style.transform = ''; activeTile = null; }
       tileRect = null;
     });
-    addEventListener('pointerdown',e=>{ if(e.button!==0) return; down={x:e.clientX,s:rail.scrollLeft}; moved=false; });
+    rail.addEventListener('pointerdown',e=>{ if(e.button!==0) return; down={x:e.clientX,s:rail.scrollLeft}; moved=false; });
     addEventListener('pointerup',()=>{ if(!down) return; down=null; rail.classList.remove('dragging'); setTimeout(()=>moved=false,0); });
   }
   const step=()=>(rail.querySelector('.tile')?.offsetWidth||260)*2+28;
@@ -811,16 +812,19 @@ if(finePointer && !reduceMotion){ document.documentElement.classList.add('has-cu
 if(window.Lenis && !reduceMotion){
   try {
     lenis = new Lenis({
-      duration: 1.05,
+      duration: 1.15,
       easing: t => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       orientation: 'vertical',
       gestureOrientation: 'vertical',
       smoothWheel: true,
-      wheelMultiplier: 0.95,
-      touchMultiplier: 1.5,
+      syncTouch: true,
+      syncTouchLerp: 0.08,
+      touchInertiaMultiplier: 35,
+      wheelMultiplier: 1.0,
+      touchMultiplier: 1.25,
       infinite: false
     });
-    document.documentElement.classList.add('has-lenis');
+    document.documentElement.classList.add('has-lenis', 'lenis', 'lenis-smooth');
     if(window.ScrollTrigger){
       lenis.on('scroll', ScrollTrigger.update);
     }
@@ -828,6 +832,7 @@ if(window.Lenis && !reduceMotion){
       gsap.ticker.add(time => {
         lenis.raf(time * 1000);
       });
+      gsap.ticker.lagSmoothing(0);
     } else {
       const raf = time => {
         lenis.raf(time);
@@ -860,8 +865,9 @@ function heroIn(){ if(!window.gsap||reduceMotion) return;
   gsap.from('.hero h1 .line>span',{yPercent:80,opacity:.1,duration:1.2,stagger:.1,ease:'expo.out'});
   gsap.from(['.hero .eyebrow','.hero .lede','.hero-ctas','.hero-facts','.scroll-cue'],{y:22,opacity:.15,duration:1,stagger:.06,ease:'power3.out',delay:.1}); }
 function finishIntro(){ if(introDone) return; introDone=true;
-  if(intro){ intro.classList.add('done'); heroIn(); setTimeout(()=>{ try{intro.remove();}catch(e){} }, 700); } }
-if(reduceMotion){ document.documentElement.classList.add('no-intro'); introDone=true; }
+  if(intro){ intro.classList.add('done'); heroIn(); setTimeout(()=>{ try{intro.remove();}catch(e){} }, 450); } }
+const isBot = /bot|crawler|spider|headless|vercel|googlebot|lighthouse/i.test(navigator.userAgent);
+if(reduceMotion || isBot){ document.documentElement.classList.add('no-intro'); introDone=true; if(intro) intro.remove(); heroIn(); }
 setTimeout(finishIntro, 50);
 
 if(window.gsap){
@@ -1218,15 +1224,20 @@ addEventListener('resize', ()=>{ lastActive = -2; });
     const pr=stageSecMetrics.profiles||{top:vh*3,height:vh*2.2,bottom:vh*5.2};
     const en=stageSecMetrics.enquire||{top:vh*10,height:vh,bottom:vh*11};
     const pf=clamp01((y-mk.top)/(mk.height-vh||1)), pp=clamp01((y-pr.top)/(pr.height-vh||1));
-    fRail.style.transform=`scaleX(${pf.toFixed(3)})`; pRail.style.transform=`scaleX(${pp.toFixed(3)})`;
+    const pfStr = `scaleX(${pf.toFixed(3)})`, ppStr = `scaleX(${pp.toFixed(3)})`;
+    if(fRail.style.transform !== pfStr) fRail.style.transform = pfStr;
+    if(pRail.style.transform !== ppStr) pRail.style.transform = ppStr;
     tgt.st=0; tgt.dim=0;
     if(mk.top>mid){ tgt.mode='bundle'; tgt.sp=0; tgt.morph=0; tgt.c=0; tgt.w=0; tgt.pol=0; }
     else if(mk.bottom>mid){ tgt.mode='forming'; tgt.sp=1; tgt.morph=0;
       tgt.c=sm(.07,.5,pf); tgt.w=clamp01((pf-.53)/.25); tgt.pol=clamp01((pf-.8)/.15); tgt.fb=sm(.86,.99,pf);
       setStep(pf<.1?0:pf<.52?1:pf<.79?2:3);
-      fBendEl.textContent=Math.round(tgt.c*360)+'°';
-      fSeamEl.textContent= tgt.w<=0?'OPEN': tgt.w<1?`WELDING ${Math.round(tgt.w*100)}%`: tgt.pol<1?`POLISHING ${Math.round(tgt.pol*100)}%`:'MIRROR FINISH';
-      fSeamEl.className = (tgt.w>0&&tgt.w<1)?'hot':''; }
+      const bText = Math.round(tgt.c*360)+'°';
+      if(fBendEl.textContent !== bText) fBendEl.textContent = bText;
+      const sText = tgt.w<=0?'OPEN': tgt.w<1?`WELDING ${Math.round(tgt.w*100)}%`: tgt.pol<1?`POLISHING ${Math.round(tgt.pol*100)}%`:'MIRROR FINISH';
+      if(fSeamEl.textContent !== sText) fSeamEl.textContent = sText;
+      const sCls = (tgt.w>0&&tgt.w<1)?'hot':'';
+      if(fSeamEl.className !== sCls) fSeamEl.className = sCls; }
     else if(pr.bottom>mid){ tgt.mode='profile'; tgt.sp=1; tgt.c=1; tgt.w=1; tgt.pol=1;
       const u=clamp01((pp-.06)/.86)*4, k=Math.min(3,Math.floor(u)), f=u-k; tgt.morph = u>=4?4:k+sm(.3,.7,f);
       setProfile(Math.round(tgt.morph), false); }

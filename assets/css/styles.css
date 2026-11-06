@@ -29,9 +29,11 @@ img,canvas{max-width:100%}
 [hidden]{display:none!important}
 section[id],.calc[id],.cat-tools[id]{scroll-margin-top:calc(var(--hdr, 104px) + 16px)}
 html{background:var(--bg)}
-@media (prefers-reduced-motion:no-preference){html:not(.has-lenis){scroll-behavior:smooth}}
+@media (prefers-reduced-motion:no-preference){html:not(.has-lenis):not(.lenis){scroll-behavior:smooth}}
 html.lenis,html.lenis body{height:auto}
-.lenis.lenis-smooth{scroll-behavior:auto!important}
+html.lenis,html.has-lenis,.lenis.lenis-smooth{scroll-behavior:auto!important}
+.lenis.lenis-smooth [data-lenis-prevent]{overscroll-behavior:contain}
+.lenis.lenis-stopped{overflow:hidden}
 body{margin:0;background-color:var(--bg);color:var(--platinum);font-family:var(--f-body);font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:clip}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:60;background:var(--bg)}
 a{color:inherit}
@@ -45,11 +47,11 @@ img{display:block}
 @media (min-width:900px){.wrap{padding-left:max(48px,env(safe-area-inset-left,0px));padding-right:max(48px,env(safe-area-inset-right,0px))}}
 
 /* Background: brushed stainless sheet under a moving light (WebGL) */
-#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block;pointer-events:none}
+#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block;pointer-events:none;transform:translateZ(0);will-change:transform}
 .no-bg body{background:radial-gradient(60% 50% at 92% 6%,rgba(224,109,59,.2),transparent 70%),radial-gradient(50% 50% at 4% 96%,rgba(90,120,170,.14),transparent 70%),repeating-linear-gradient(0deg,rgba(255,255,255,.012) 0 1px,transparent 1px 3px),var(--bg)}
 
 /* Stage */
-#stage{position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block;pointer-events:none}
+#stage{position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block;pointer-events:none;transform:translateZ(0);will-change:transform}
 .stage-fallback{position:fixed;inset:0;z-index:0;pointer-events:none;display:none;background:radial-gradient(50% 45% at 75% 45%,rgba(203,213,225,.14),transparent 70%)}
 .no-gl .stage-fallback{display:block}
 .vignette{position:fixed;inset:0;z-index:1;pointer-events:none;background:radial-gradient(120% 90% at 50% 50%,transparent 55%,rgba(0,0,0,.6) 100%)}
@@ -57,15 +59,15 @@ img{display:block}
 main,footer{position:relative;z-index:3}
 
 /* Intro */
-.intro{position:fixed;inset:0;z-index:100;background:var(--bg);display:grid;place-items:center;transition:transform 1.1s cubic-bezier(.76,0,.24,1)}
-.intro.done{transform:translateY(-100%)}
+.intro{position:fixed;inset:0;z-index:100;background:var(--bg);display:grid;place-items:center;transition:transform .35s cubic-bezier(.76,0,.24,1),opacity .3s ease}
+.intro.done{transform:translateY(-100%);opacity:0;pointer-events:none}
 .intro>div{display:grid;justify-items:center;gap:18px}
 .intro svg{width:54px;height:54px}
 .intro-name{font-size:12px;font-weight:500;letter-spacing:.32em;text-transform:uppercase;color:var(--body)}
 .intro-line{display:block;width:180px;height:1px;background:var(--line);overflow:hidden}
 .intro-line b{display:block;height:100%;background:var(--copper-grad);transform-origin:left;animation:fill 1.1s var(--ease) forwards}
 @keyframes fill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
-.no-intro .intro{display:none}
+.no-intro .intro{display:none!important}
 
 /* Header: trust bar + glass nav */
 .top{position:fixed;inset:0 0 auto;z-index:50;padding-top:env(safe-area-inset-top,0px)}

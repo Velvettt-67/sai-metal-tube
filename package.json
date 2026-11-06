@@ -1,0 +1,11 @@
+{
+  "name": "sai-metal-and-tube",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sai Metal And Tube website: static HTML/CSS/JS with Three.js, GSAP and Lenis.",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js",
+    "test": "node test.js"
+  }
+}

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://sai-metal-and-tube-three.vercel.app/sitemap.xml

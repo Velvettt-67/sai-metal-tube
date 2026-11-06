@@ -1208,24 +1208,14 @@ addEventListener('resize', ()=>{ lastActive = -2; });
   const secs={making:$('#making'),profiles:$('#profiles'),enquire:$('#enquire')};
   const fBendEl=$('#fBend'), fSeamEl=$('#fSeam'), fRail=$('#fRail'), pRail=$('#pRail');
   let stageSecMetrics={};
-  function updateStageMetrics(){
-    const vh=innerHeight;
-    for(const k of ['making','profiles','enquire']){
-      const el=secs[k];
-      if(el) stageSecMetrics[k]={top:el.offsetTop, height:el.offsetHeight, bottom:el.offsetTop+el.offsetHeight};
-    }
-  }
-  addEventListener('resize', updateStageMetrics);
-  setTimeout(updateStageMetrics, 120);
-
   let lastReadY = -9999;
   function readScroll(){
     const y = scrollY;
-    if(y === lastReadY && tgt.mode !== 'bundle') return;
+    if(y === lastReadY) return;
     lastReadY = y;
     const vh=innerHeight, mid=y+vh*.5;
-    const mk=stageSecMetrics.making||{top:0,height:vh*2,bottom:vh*2};
-    const pr=stageSecMetrics.profiles||{top:vh*2,height:vh*2.2,bottom:vh*4.2};
+    const mk=stageSecMetrics.making||{top:vh,height:vh*2,bottom:vh*3};
+    const pr=stageSecMetrics.profiles||{top:vh*3,height:vh*2.2,bottom:vh*5.2};
     const en=stageSecMetrics.enquire||{top:vh*10,height:vh,bottom:vh*11};
     const pf=clamp01((y-mk.top)/(mk.height-vh||1)), pp=clamp01((y-pr.top)/(pr.height-vh||1));
     fRail.style.transform=`scaleX(${pf.toFixed(3)})`; pRail.style.transform=`scaleX(${pp.toFixed(3)})`;
@@ -1243,6 +1233,18 @@ addEventListener('resize', ()=>{ lastActive = -2; });
     else if(en.top>y+vh*.35){ tgt.mode='hidden'; tgt.sp=1; tgt.dim=1; tgt.morph=0; }
     else { tgt.mode='stack'; tgt.sp=1; tgt.st=1; tgt.morph=0; }
   }
+  function updateStageMetrics(){
+    const vh=innerHeight;
+    for(const k of ['making','profiles','enquire']){
+      const el=secs[k];
+      if(el) stageSecMetrics[k]={top:el.offsetTop, height:el.offsetHeight, bottom:el.offsetTop+el.offsetHeight};
+    }
+    lastReadY = -9999;
+    readScroll();
+  }
+  updateStageMetrics();
+  addEventListener('resize', updateStageMetrics);
+  setTimeout(updateStageMetrics, 120);
 
   const callout=$('#callout'), heroTip=new T.Vector3(0,R0,h);
   let last=performance.now(), time=0, fade=0, firstFrame=true;
@@ -1256,7 +1258,7 @@ addEventListener('resize', ()=>{ lastActive = -2; });
     cur.sp+=(tgt.sp-cur.sp)*k; cur.st+=(tgt.st-cur.st)*k;
     for(const n of ['morph','c','w','pol']) cur[n]+=(tgt[n]-cur[n])*kf;
     cur.dim+=(tgt.dim-cur.dim)*(1-Math.exp(-dt*5));
-    fade=Math.min(1,fade+dt*(reduceMotion?10:.8));
+    fade=Math.min(1,fade+dt*(reduceMotion?10:2.5));
     const op=fade*fade*(1-cur.dim);
     canvas.style.opacity=op.toFixed(3);
     if(op<.01 && !firstFrame){
